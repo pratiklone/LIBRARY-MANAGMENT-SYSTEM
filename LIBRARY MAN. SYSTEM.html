@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Library Management System</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: url('https://images.unsplash.com/photo-1513475382585-d06e58bcb0e8?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: rgba(0, 0, 0, 0.8);
+      padding: 20px 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      width: 90%;
+      max-width: 900px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 32px;
+    }
+
+    h2 {
+      margin-bottom: 15px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      margin-top: 5px;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      background: #ff6f61;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #d95c50;
+    }
+
+    .books {
+      margin-top: 20px;
+    }
+
+    .books table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .books th, .books td {
+      padding: 12px;
+      text-align: left;
+    }
+
+    .books th {
+      background: rgba(255, 255, 255, 0.2);
+      font-size: 16px;
+    }
+
+    .books td {
+      background: rgba(255, 255, 255, 0.1);
+      font-size: 14px;
+    }
+
+    .books tr:nth-child(even) td {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .action-buttons button {
+      padding: 5px 10px;
+      font-size: 14px;
+    }
+
+    .search-bar {
+      margin: 20px 0;
+      display: flex;
+      gap: 10px;
+    }
+
+    .search-bar input {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: none;
+    }
+
+    #popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 255, 255, 0.9);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      text-align: center;
+      display: none;
+      z-index: 1000;
+    }
+
+    #popup button {
+      margin-top: 15px;
+    }
+
+    #overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+  <div id="overlay"></div>
+  <div id="popup">
+    <h2>Warning</h2>
+    <p>Please fill in all the fields!</p>
+    <button onclick="closePopup()">Close</button>
+  </div>
+
+  <div class="container">
+    <h1>Library Management System</h1>
+    <div class="form">
+      <h2>Add Book</h2>
+      <div class="form-group">
+        <label for="title">Title</label>
+        <input type="text" id="title" placeholder="Enter book title">
+      </div>
+      <div class="form-group">
+        <label for="author">Author</label>
+        <input type="text" id="author" placeholder="Enter book author">
+      </div>
+      <div class="form-group">
+        <label for="year">Year</label>
+        <input type="number" id="year" placeholder="Enter year of publication">
+      </div>
+      <button onclick="addBook()">Add Book</button>
+    </div>
+
+    <div class="search-bar">
+      <input type="text" id="search" placeholder="Search by title or author" onkeyup="searchBooks()">
+      <button onclick="searchBooks()">Search</button>
+    </div>
+
+    <div class="books">
+      <h2>Books in Library</h2>
+      <table id="books-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Year</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Books will be dynamically inserted here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const books = JSON.parse(localStorage.getItem('books')) || [];
+
+    function saveToLocalStorage() {
+      localStorage.setItem('books', JSON.stringify(books));
+    }
+
+    function addBook() {
+      const title = document.getElementById('title').value.trim();
+      const author = document.getElementById('author').value.trim();
+      const year = document.getElementById('year').value.trim();
+
+      if (!title || !author || !year) {
+        showPopup();
+        return;
+      }
+
+      books.push({ title, author, year });
+      saveToLocalStorage();
+      displayBooks();
+      document.getElementById('title').value = '';
+      document.getElementById('author').value = '';
+      document.getElementById('year').value = '';
+    }
+
+    function displayBooks() {
+      const tableBody = document.getElementById('books-table').querySelector('tbody');
+      tableBody.innerHTML = '';
+      books.forEach((book, index) => {
+        const row = `
+          <tr>
+            <td>${book.title}</td>
+            <td>${book.author}</td>
+            <td>${book.year}</td>
+            <td>
+              <div class="action-buttons">
+                <button onclick="deleteBook(${index})">Delete</button>
+              </div>
+            </td>
+          </tr>
+        `;
+        tableBody.insertAdjacentHTML('beforeend', row);
+      });
+    }
+
+    function deleteBook(index) {
+      books.splice(index, 1);
+      saveToLocalStorage();
+      displayBooks();
+    }
+
+    function searchBooks() {
+      const query = document.getElementById('search').value.toLowerCase();
+      const filteredBooks = books.filter(book =>
+        book.title.toLowerCase().includes(query) ||
+        book.author.toLowerCase().includes(query)
+      );
+
+      const tableBody = document.getElementById('books-table').querySelector('tbody');
+      tableBody.innerHTML = '';
+      filteredBooks.forEach((book, index) => {
+        const row = `
+          <tr>
+            <td>${book.title}</td>
+            <td>${book.author}</td>
+            <td>${book.year}</td>
+            <td>
+              <div class="action-buttons">
+                <button onclick="deleteBook(${index})">Delete</button>
+              </div>
+            </td>
+          </tr>
+        `;
+        tableBody.insertAdjacentHTML('beforeend', row);
+      });
+    }
+
+    function showPopup() {
+      document.getElementById('popup').style.display = 'block';
+      document.getElementById('overlay').style.display = 'block';
+    }
+
+    function closePopup() {
+      document.getElementById('popup').style.display = 'none';
+      document.getElementById('overlay').style.display = 'none';
+    }
+
+    displayBooks();
+  </script>
+</body>
+</html>
